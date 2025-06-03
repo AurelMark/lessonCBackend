@@ -1,0 +1,455 @@
+[
+    {
+      "title": {
+        "ro": "Programare pentru Începători",
+        "ru": "Программирование для начинающих",
+        "en": "Programming for Beginners"
+      },
+      "description": {
+        "ro": "Bazele programării explicate clar.",
+        "ru": "Основы программирования объяснены понятно.",
+        "en": "Programming basics explained clearly."
+      },
+      "content": {
+        "ro": "Acest curs introduce fundamentele programării.",
+        "ru": "Этот курс вводит основы программирования.",
+        "en": "This course introduces programming fundamentals."
+      },
+      "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Programming+for+Beginners",
+      "slug": "programming-for-beginners",
+      "features": {
+        "lectures": "30",
+        "quizzes": "8",
+        "duration": 25,
+        "durationType": "hh",
+        "skillLevel": "Beginner",
+        "language": "ro",
+        "students": 500,
+        "asssessments": true
+      }
+    },
+    {
+      "title": {
+        "ro": "Marketing Digital",
+        "ru": "Цифровой маркетинг",
+        "en": "Digital Marketing"
+      },
+      "description": {
+        "ro": "Strategii eficiente pentru mediul online.",
+        "ru": "Эффективные стратегии для онлайна.",
+        "en": "Effective strategies for online."
+      },
+      "content": {
+        "ro": "Învață cum să îți promovezi brandul online.",
+        "ru": "Узнай, как продвигать свой бренд онлайн.",
+        "en": "Learn how to promote your brand online."
+      },
+      "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Digital+Marketing",
+      "slug": "digital-marketing",
+      "features": {
+        "lectures": "45",
+        "quizzes": "12",
+        "duration": 35,
+        "durationType": "hh",
+        "skillLevel": "Intermediate",
+        "language": "en",
+        "students": 820,
+        "asssessments": true
+      },
+      "alert": [
+        {
+          "type": "info",
+          "color": "blue",
+          "content": {
+            "ro": "Necesită cunoștințe de bază în social media.",
+            "ru": "Требуются базовые знания в соцсетях.",
+            "en": "Basic social media knowledge required."
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "ro": "Management Financiar",
+        "ru": "Финансовый менеджмент",
+        "en": "Financial Management"
+      },
+      "description": {
+        "ro": "Controlul eficient al finanțelor personale.",
+        "ru": "Эффективный контроль личных финансов.",
+        "en": "Efficient control of personal finances."
+      },
+      "content": {
+        "ro": "Învață cum să gestionezi banii eficient.",
+        "ru": "Научись эффективно управлять деньгами.",
+        "en": "Learn how to manage money efficiently."
+      },
+      "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Financial+Management",
+      "slug": "financial-management",
+      "features": {
+        "lectures": "25",
+        "quizzes": "7",
+        "duration": 20,
+        "durationType": "hh",
+        "skillLevel": "Elementary",
+        "language": "ru",
+        "students": 360,
+        "asssessments": false
+      }
+    },
+    {
+      "title": {
+        "ro": "Leadership Modern",
+        "ru": "Современное лидерство",
+        "en": "Modern Leadership"
+      },
+      "description": {
+        "ro": "Aptitudini esențiale pentru liderii de azi.",
+        "ru": "Ключевые навыки для современных лидеров.",
+        "en": "Key skills for today's leaders."
+      },
+      "content": {
+        "ro": "Descoperă ce înseamnă leadership-ul modern.",
+        "ru": "Узнай, что такое современное лидерство.",
+        "en": "Discover what modern leadership means."
+      },
+      "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Modern+Leadership",
+      "slug": "modern-leadership",
+      "features": {
+        "lectures": "50",
+        "quizzes": "10",
+        "duration": 40,
+        "durationType": "hh",
+        "skillLevel": "Advanced",
+        "language": "en",
+        "students": 670,
+        "asssessments": true
+      },
+      "alert": [
+        {
+          "type": "warning",
+          "color": "yellow",
+          "content": {
+            "ro": "Este recomandată experiența managerială.",
+            "ru": "Рекомендуется опыт управления.",
+            "en": "Management experience recommended."
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "ro": "Copywriting Eficient",
+        "ru": "Эффективный копирайтинг",
+        "en": "Effective Copywriting"
+      },
+      "description": {
+        "ro": "Cum să scrii texte care vând.",
+        "ru": "Как писать тексты, которые продают.",
+        "en": "How to write texts that sell."
+      },
+      "content": {
+        "ro": "Învață să creezi texte persuasive.",
+        "ru": "Научись создавать убедительные тексты.",
+        "en": "Learn how to create persuasive texts."
+      },
+      "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Effective+Copywriting",
+      "slug": "effective-copywriting",
+      "features": {
+        "lectures": "20",
+        "quizzes": "5",
+        "duration": 15,
+        "durationType": "hh",
+        "skillLevel": "Pre-Intermediate",
+        "language": "ro",
+        "students": 230,
+        "asssessments": false
+      }
+    },
+    [
+      {
+        "title": {
+          "ro": "Design Grafic pentru Începători",
+          "ru": "Графический дизайн для начинающих",
+          "en": "Graphic Design for Beginners"
+        },
+        "description": {
+          "ro": "Învață principiile de bază ale designului grafic.",
+          "ru": "Изучите основы графического дизайна.",
+          "en": "Learn the basics of graphic design."
+        },
+        "content": {
+          "ro": "Curs introductiv pentru design grafic modern.",
+          "ru": "Вводный курс по современному графическому дизайну.",
+          "en": "Introductory course for modern graphic design."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Graphic+Design",
+        "slug": "graphic-design-for-beginners",
+        "features": {
+          "lectures": "35",
+          "quizzes": "10",
+          "duration": 28,
+          "durationType": "hh",
+          "skillLevel": "Beginner",
+          "language": "en",
+          "students": 450,
+          "asssessments": true
+        }
+      },
+      {
+        "title": {
+          "ro": "Bazele Economiei",
+          "ru": "Основы экономики",
+          "en": "Basics of Economy"
+        },
+        "description": {
+          "ro": "Înțelegerea principiilor economice.",
+          "ru": "Понимание экономических принципов.",
+          "en": "Understanding economic principles."
+        },
+        "content": {
+          "ro": "Curs introductiv pentru economie modernă.",
+          "ru": "Вводный курс по современной экономике.",
+          "en": "Introductory course for modern economy."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Basics+of+Economy",
+        "slug": "basics-of-economy",
+        "features": {
+          "lectures": "40",
+          "quizzes": "8",
+          "duration": 30,
+          "durationType": "hh",
+          "skillLevel": "Elementary",
+          "language": "ro",
+          "students": 520,
+          "asssessments": false
+        },
+        "alert": [
+          {
+            "type": "success",
+            "color": "green",
+            "content": {
+              "ro": "Include studii de caz recente.",
+              "ru": "Включает недавние кейс-стади.",
+              "en": "Includes recent case studies."
+            }
+          }
+        ]
+      },
+      {
+        "title": {
+          "ro": "Psihologie Practică",
+          "ru": "Практическая психология",
+          "en": "Practical Psychology"
+        },
+        "description": {
+          "ro": "Aplicarea psihologiei în viața de zi cu zi.",
+          "ru": "Применение психологии в повседневной жизни.",
+          "en": "Applying psychology in daily life."
+        },
+        "content": {
+          "ro": "Tehnici pentru îmbunătățirea relațiilor personale.",
+          "ru": "Техники улучшения личных отношений.",
+          "en": "Techniques for improving personal relationships."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Practical+Psychology",
+        "slug": "practical-psychology",
+        "features": {
+          "lectures": "50",
+          "quizzes": "12",
+          "duration": 35,
+          "durationType": "hh",
+          "skillLevel": "Intermediate",
+          "language": "ru",
+          "students": 600,
+          "asssessments": true
+        }
+      },
+      {
+        "title": {
+          "ro": "Dezvoltare Web",
+          "ru": "Веб-разработка",
+          "en": "Web Development"
+        },
+        "description": {
+          "ro": "Construiește site-uri web de la zero.",
+          "ru": "Создавайте сайты с нуля.",
+          "en": "Build websites from scratch."
+        },
+        "content": {
+          "ro": "HTML, CSS și JavaScript pentru începători.",
+          "ru": "HTML, CSS и JavaScript для начинающих.",
+          "en": "HTML, CSS, and JavaScript for beginners."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Web+Development",
+        "slug": "web-development",
+        "features": {
+          "lectures": "60",
+          "quizzes": "15",
+          "duration": 40,
+          "durationType": "hh",
+          "skillLevel": "Pre-Intermediate",
+          "language": "en",
+          "students": 950,
+          "asssessments": true
+        }
+      },
+      {
+        "title": {
+          "ro": "SEO pentru Începători",
+          "ru": "SEO для начинающих",
+          "en": "SEO for Beginners"
+        },
+        "description": {
+          "ro": "Optimizează site-ul tău pentru Google.",
+          "ru": "Оптимизируйте ваш сайт для Google.",
+          "en": "Optimize your website for Google."
+        },
+        "content": {
+          "ro": "Noțiuni fundamentale despre optimizarea pentru motoarele de căutare.",
+          "ru": "Основы оптимизации для поисковых систем.",
+          "en": "Basics of search engine optimization."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=SEO+for+Beginners",
+        "slug": "seo-for-beginners",
+        "features": {
+          "lectures": "20",
+          "quizzes": "5",
+          "duration": 15,
+          "durationType": "hh",
+          "skillLevel": "Beginner",
+          "language": "ro",
+          "students": 300,
+          "asssessments": false
+        }
+      },
+      {
+        "title": {
+          "ro": "Public Speaking",
+          "ru": "Ораторское искусство",
+          "en": "Public Speaking"
+        },
+        "description": {
+          "ro": "Învață să vorbești cu încredere.",
+          "ru": "Научитесь говорить уверенно.",
+          "en": "Learn to speak confidently."
+        },
+        "content": {
+          "ro": "Tehnici pentru discursuri eficiente.",
+          "ru": "Техники эффективных выступлений.",
+          "en": "Techniques for effective speeches."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Public+Speaking",
+        "slug": "public-speaking",
+        "features": {
+          "lectures": "30",
+          "quizzes": "6",
+          "duration": 20,
+          "durationType": "hh",
+          "skillLevel": "Intermediate",
+          "language": "en",
+          "students": 420,
+          "asssessments": true
+        },
+        "alert": [
+          {
+            "type": "danger",
+            "color": "red",
+            "content": {
+              "ro": "Include sesiuni live obligatorii.",
+              "ru": "Обязательные живые сессии.",
+              "en": "Mandatory live sessions included."
+            }
+          }
+        ]
+      },
+      {
+        "title": {
+          "ro": "Dezvoltare Personală",
+          "ru": "Личностное развитие",
+          "en": "Personal Development"
+        },
+        "description": {
+          "ro": "Îmbunătățește-ți abilitățile personale.",
+          "ru": "Развивайте личные навыки.",
+          "en": "Improve your personal skills."
+        },
+        "content": {
+          "ro": "Tehnici pentru succes personal și profesional.",
+          "ru": "Техники для личного и профессионального успеха.",
+          "en": "Techniques for personal and professional success."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Personal+Development",
+        "slug": "personal-development",
+        "features": {
+          "lectures": "25",
+          "quizzes": "5",
+          "duration": 18,
+          "durationType": "hh",
+          "skillLevel": "Upper-Intermediate",
+          "language": "ro",
+          "students": 370,
+          "asssessments": false
+        }
+      },
+      {
+        "title": {
+          "ro": "Proiectare UX/UI",
+          "ru": "Проектирование UX/UI",
+          "en": "UX/UI Design"
+        },
+        "description": {
+          "ro": "Fundamentele designului centrat pe utilizator.",
+          "ru": "Основы дизайна, ориентированного на пользователя.",
+          "en": "Basics of user-centered design."
+        },
+        "content": {
+          "ro": "Învață principiile UX și UI moderne.",
+          "ru": "Изучите современные принципы UX и UI.",
+          "en": "Learn modern UX and UI principles."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=UX+UI+Design",
+        "slug": "ux-ui-design",
+        "features": {
+          "lectures": "40",
+          "quizzes": "10",
+          "duration": 32,
+          "durationType": "hh",
+          "skillLevel": "Advanced",
+          "language": "en",
+          "students": 510,
+          "asssessments": true
+        }
+      },
+      {
+        "title": {
+          "ro": "Inteligență Emoțională",
+          "ru": "Эмоциональный интеллект",
+          "en": "Emotional Intelligence"
+        },
+        "description": {
+          "ro": "Dezvoltă-ți abilitățile emoționale.",
+          "ru": "Развивайте эмоциональные навыки.",
+          "en": "Develop emotional skills."
+        },
+        "content": {
+          "ro": "Importanța inteligenței emoționale în leadership.",
+          "ru": "Важность эмоционального интеллекта в лидерстве.",
+          "en": "The importance of emotional intelligence in leadership."
+        },
+        "imageUrl": "https://dummyimage.com/1200x1024/000/fff&text=Emotional+Intelligence",
+        "slug": "emotional-intelligence",
+        "features": {
+          "lectures": "25",
+          "quizzes": "7",
+          "duration": 22,
+          "durationType": "hh",
+          "skillLevel": "Intermediate",
+          "language": "ro",
+          "students": 340,
+          "asssessments": false
+        }
+      }
+    ]
+  ]
+  

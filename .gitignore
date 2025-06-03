@@ -1,0 +1,10 @@
+.env
+.env.*
+node_modules/
+uploads/private/*
+!uploads/private/
+!uploads/private/.gitkeep
+
+uploads/public/*
+!uploads/public/
+!uploads/public/.gitkeep
