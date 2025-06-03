@@ -30,7 +30,7 @@ Backend for the LessonCamp project.
 
    # Строка подключения к MongoDB
    MONGO_URL=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority&appName=<appName>
-   appName=ClusterPhonetics
+   appName=ClusterName
 
    # JWT настройки
    JWT_SECRET='' # <Ваш секрет>
