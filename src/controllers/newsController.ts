@@ -53,22 +53,11 @@ export const deleteNews = catchAsync(async (req: Request, res: Response): Promis
 
 export const updateNews = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { realId } = req;
-    delete req.body.slug;
     const { title, ...reqBody } = req.body;
-    let baseSlug = slugify(title.ro, { lower: true, strict: true });
-    let slug = baseSlug;
-    let exists = await NewsModel.findOne({ slug });
-    let counter = 1;
-    while (exists) {
-        slug = `${baseSlug}-${counter}`;
-        exists = await NewsModel.findOne({ slug });
-        counter++;
-    };
 
     const news = await NewsModel.findByIdAndUpdate(realId, {
         title,
         ...reqBody,
-        slug,
     }, { new: true });
 
     if (!news) {
@@ -98,6 +87,7 @@ export const getAllNews = catchAsync(async (req: Request, res: Response): Promis
     const totalNews = await NewsModel.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalNews / limit);
     const news = await NewsModel.find(searchFilter)
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
     const currentNewsCount = news.length;

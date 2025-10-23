@@ -38,6 +38,10 @@ export const createUser = catchAsync(async (req: Request, res: Response): Promis
         return;
     }
 
+    const decodedGroups = (Array.isArray(groups) ? groups : [])
+        .map(hashId => decodeIdSafe(hashId))
+        .filter(Boolean);
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const otpCode = generateOtp();
     const otpExpiresAt = dayjs().add(3, 'hour').toDate();
@@ -49,8 +53,8 @@ export const createUser = catchAsync(async (req: Request, res: Response): Promis
         firstName,
         lastName,
         role,
-        groups,
         otpCode,
+        groups: decodedGroups,
         otpExpiresAt,
         isTempAccount: false,
         isVerified: false,
@@ -195,14 +199,14 @@ export const resendOtpCode = catchAsync(async (req: Request, res: Response): Pro
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { email, login } = req.body;
+    const { email } = req.body;
 
-    const user = await UserModel.findOne({ email, login });
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
         res.status(StatusCodes.NOT_FOUND).json({
             success: false,
-            message: 'User not found with provided login and email',
+            message: 'User not found with provided email',
         });
         return;
     }
@@ -230,9 +234,9 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response): Pr
 });
 
 export const resetPassword = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { email, login, otpCode, newPassword } = req.body;
+    const { email, otpCode, newPassword } = req.body;
 
-    const user = await UserModel.findOne({ email, login });
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
         res.status(StatusCodes.NOT_FOUND).json({
@@ -290,6 +294,10 @@ export const resetPassword = catchAsync(async (req: Request, res: Response): Pro
 export const generateUsers = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { count, baseLogin, baseEmail, groups = [] } = req.body;
 
+    const decodedGroups = (Array.isArray(groups) ? groups : [])
+        .map(hashId => decodeIdSafe(hashId))
+        .filter(Boolean);
+
     const tempUsers = [];
     const plainPasswords = [];
     const usedLogins = new Set();
@@ -323,7 +331,7 @@ export const generateUsers = catchAsync(async (req: Request, res: Response): Pro
             firstName: 'Temp',
             lastName: `User-${i + 1}`,
             role: 'client',
-            groups,
+            groups: decodedGroups,
             isVerified: false,
             otpCode,
             otpExpiresAt,
@@ -442,7 +450,7 @@ export const patchUser = catchAsync(async (req: Request, res: Response): Promise
     }
 
     const updateData: any = {};
-    const fieldsToUpdate = ['login', 'email', 'firstName', 'lastName', 'role', 'groups'];
+    const fieldsToUpdate = ['login', 'email', 'firstName', 'lastName', 'role', 'groups', 'isVerified'];
 
     for (const field of fieldsToUpdate) {
         if (req.body[field] !== undefined) {
@@ -468,20 +476,17 @@ export const patchUser = catchAsync(async (req: Request, res: Response): Promise
         });
     }
 
-    res.status(StatusCodes.OK).json({
-        success: true,
-        message: 'User updated successfully',
-        user,
-    });
+    res.status(StatusCodes.OK).json(user);
 });
 
 export const toggleUserActiveStatus = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { hashId } = req.params;
     const { activate } = req.body;
 
-    if (!['true', 'false'].includes(String(activate))) {
-        throw new BadRequestError('Invalid boolean value');
-    }
+    const activateValue =
+        typeof activate === 'boolean'
+            ? activate
+            : String(activate) === 'true';
 
     const realId = decodeIdSafe(hashId);
     if (!realId) {
@@ -490,7 +495,7 @@ export const toggleUserActiveStatus = catchAsync(async (req: Request, res: Respo
 
     const updatedUser = await UserModel.findByIdAndUpdate(
         realId,
-        { isActive: activate === 'true' },
+        { isActive: activateValue },
         { new: true, runValidators: true }
     ).select('-password -otpCode -otpExpiresAt');
 
@@ -498,11 +503,7 @@ export const toggleUserActiveStatus = catchAsync(async (req: Request, res: Respo
         throw new NotFoundError('User not found');
     }
 
-    res.status(StatusCodes.OK).json({
-        success: true,
-        message: `User active status set to ${activate}`,
-        user: updatedUser,
-    });
+    res.status(StatusCodes.OK).json(updatedUser);
 });
 
 
@@ -553,6 +554,8 @@ export const updateMyselfUserData = catchAsync(async (req: Request, res: Respons
     for (const field of fieldsToUpdate) {
         if (req.body[field] !== undefined) {
             updateData[field] = req.body[field];
+            updateData['isTempAccount'] = false;
+            updateData['isActive'] = true;
         }
     }
 
@@ -571,8 +574,7 @@ export const updateMyselfUserData = catchAsync(async (req: Request, res: Respons
 
     res.status(StatusCodes.OK).json({
         success: true,
-        message: 'User updated successfully',
-        user,
+        message: 'User updated successfully'
     });
 });
 
@@ -631,7 +633,7 @@ export const getAllUsers = catchAsync(async (req: Request, res: Response): Promi
             }))
         }));
 
-        const { _id, ...restUser } = omitFields(user, ['_id']);
+        const { _id, ...restUser } = user;
 
         return {
             ...restUser,
@@ -651,10 +653,53 @@ export const getAllUsers = catchAsync(async (req: Request, res: Response): Promi
     const totalPages = Math.ceil(total / limit);
 
     res.status(StatusCodes.OK).json({
-        users: mappedUsers,
+        data: mappedUsers,
         total,
         totalPages,
         currentPage: page,
         usersPerPage: mappedUsers.length
     });
 });
+
+export const getUserById = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const { hashId } = req.params;
+
+    const realId = decodeIdSafe(hashId);
+
+    const user = await UserModel
+        .findById(realId)
+        .select('-password -otpCode -otpExpiresAt -__v -updatedAt')
+        .populate('groups', 'title')
+        .lean();
+
+    if (!user) {
+        throw new NotFoundError(`User with id "${hashId}" not found`);
+    }
+
+    // Трансформация групп и examAttempts, аналогично getLesson
+    const examAttempts = (user.examAttempts || []).map((attempt: any) => ({
+        ...omitFields(attempt, ['_id']),
+        id: encodeId(attempt._id.toString()),
+        exam: attempt.exam ? encodeId(attempt.exam.toString()) : null,
+        answers: (attempt.answers || []).map((ans: any) => ({
+            ...omitFields(ans, ['_id']),
+            id: encodeId(ans._id.toString())
+        }))
+    }));
+
+    const { _id, groups, ...restUser } = user;
+
+    res.status(StatusCodes.OK).json({
+        id: _id ? encodeId(_id.toString()) : null,
+        groups: (groups || []).map((g: any) => {
+            const { _id, ...rest } = g;
+            return {
+                ...rest,
+                id: encodeId(_id.toString())
+            };
+        }),
+        examAttempts,
+        ...restUser
+    });
+});
+

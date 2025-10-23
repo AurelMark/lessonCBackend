@@ -1,14 +1,16 @@
 import { BadRequestError } from '@/errors/customErrors';
 import crypto from 'crypto';
+import { Types } from 'mongoose';
 
 const SECRET = process.env.HASH_SECRET || 'default_secret_key';
 const algorithm = 'aes-256-cbc';
 const key = crypto.createHash('sha256').update(SECRET).digest();
 const iv = Buffer.alloc(16, 0);
 
-export const encodeId = (id: string): string => {
+export const encodeId = (id: string | Types.ObjectId): string => {
+    const idStr = typeof id === 'string' ? id : id.toString();
     const cipher = crypto.createCipheriv(algorithm, key, iv);
-    let encrypted = cipher.update(id, 'utf8', 'base64');
+    let encrypted = cipher.update(idStr, 'utf8', 'base64');
     encrypted += cipher.final('base64');
     return encrypted
         .replace(/\+/g, '-')

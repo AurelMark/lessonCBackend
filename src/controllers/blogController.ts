@@ -40,6 +40,7 @@ export const getAllBlogNews = catchAsync(async (req: Request, res: Response): Pr
     const totalNews = await NewsModel.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalNews / limit);
     const news = await NewsModel.find(searchFilter)
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
 

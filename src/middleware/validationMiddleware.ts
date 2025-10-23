@@ -176,12 +176,10 @@ export const validateOtpCode = [
 
 export const validateResendOtpAndForgotPassword = [
     body('email').isEmail().withMessage('Valid email is required'),
-    body('login').isString().trim().notEmpty().withMessage('Login is required'),
 ];
 
 export const validateResetPassword = [
     body('email').isEmail().withMessage('Valid email is required'),
-    body('login').isString().trim().notEmpty().withMessage('Login is required'),
     body('otpCode').isString().trim().notEmpty().withMessage('OTP code is required'),
     body('newPassword').isString().isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
 ];
@@ -254,6 +252,11 @@ export const validateUpdateUser = [
             }
             return true;
         }),
+
+    body('isVerified')
+        .optional()
+        .isBoolean()
+        .withMessage('isVerified must be a boolean'),
 ];
 
 export const validateManyIds = [
@@ -375,21 +378,36 @@ export const validateCreateGroup = [
             }
             return true;
         }),
-    body('users').optional().isArray(),
-    body('users.*')
+    body('lessons')
         .optional()
-        .isMongoId()
-        .withMessage('Each user ID must be a valid Mongo ID'),
-    body('lessons').optional().isArray(),
+        .isArray()
+        .withMessage('Lessons must be an array of lesson IDs'),
     body('lessons.*')
         .optional()
-        .isMongoId()
-        .withMessage('Each lesson ID must be a valid Mongo ID'),
-    body('exams').optional().isArray(),
+        .isString()
+        .withMessage('Each lesson ID must be a string')
+        .custom((value) => {
+            const decoded = decodeIdSafe(value);
+            if (!decoded) {
+                throw new Error('Each lesson ID must be a valid Mongo ID');
+            }
+            return true;
+        }),
+    body('exams')
+        .optional()
+        .isArray()
+        .withMessage('Exams must be an array of exam IDs'),
     body('exams.*')
         .optional()
-        .isMongoId()
-        .withMessage('Each exam ID must be a valid Mongo ID'),
+        .isString()
+        .withMessage('Each exam ID must be a string')
+        .custom((value) => {
+            const decoded = decodeIdSafe(value);
+            if (!decoded) {
+                throw new Error('Each exam ID must be a valid Mongo ID');
+            }
+            return true;
+        }),
 ];
 
 export const validatePagination = [
@@ -544,23 +562,12 @@ export const validateCreateExam = [
 ];
 
 export const validateSubmitExam = [
-    body('examId')
-        .isString().withMessage('examId must be a string')
-        .custom(value => {
-            if (!decodeIdSafe(value)) throw new Error('Invalid exam ID');
-            return true;
-        }),
-    body('userId')
-        .isString().withMessage('userId must be a string')
-        .custom(value => {
-            if (!decodeIdSafe(value)) throw new Error('Invalid user ID');
-            return true;
-        }),
-    body('answers')
-        .isArray({ min: 1 }).withMessage('answers must be a non-empty array'),
-    body('answers.questionIndex')
+    body('examId').isString(),
+    body('userId').isString(),
+    body('answers').isArray({ min: 1 }),
+    body('answers.*.questionIndex')
         .isInt({ min: 0 }).withMessage('Each answer must have a valid questionIndex'),
-    body('answers.selectedOptionIndex')
+    body('answers.*.selectedOptionIndex')
         .isInt({ min: 0 }).withMessage('Each answer must have a valid selectedOptionIndex'),
 ];
 
@@ -607,6 +614,79 @@ export const validateSendContactReply = [
         .trim()
         .notEmpty().withMessage('Message is required')
         .isLength({ min: 5 }).withMessage('Message must be at least 5 characters')
+];
+
+const arrayBlockValidator = (field: string) => [
+    body(`${field}`)
+        .isArray({ min: 1 }).withMessage(`${field} must be a non-empty array`),
+    ...generateLocalizedValidations([`${field}.*.title`]),
+    ...generateLocalizedValidations([`${field}.*.description`]),
+    body(`${field}.*.imageUrl`)
+        .isString().withMessage(`imageUrl is required for every ${field} item`)
+        .notEmpty().withMessage(`imageUrl is required for every ${field} item`),
+    body(`${field}.*.link`)
+        .optional()
+        .isString().withMessage(`link must be a string for every ${field} item`),
+];
+
+const arrayBlockInfoValidator = (field: string) => [
+    body(`${field}`)
+        .isArray({ min: 1 }).withMessage(`${field} must be a non-empty array`),
+    ...generateLocalizedValidations([`${field}.*.title`]),
+    ...generateLocalizedValidations([`${field}.*.description`]),
+    body(`${field}.*.imageUrl`)
+        .isString().withMessage(`imageUrl is required for every ${field} item`)
+        .notEmpty().withMessage(`imageUrl is required for every ${field} item`),
+    body(`${field}.*.link`)
+        .optional({ nullable: true, checkFalsy: true })
+        .isString()
+        .withMessage(`link must be a string for every ${field} item`),
+];
+
+export const validateHomepageData = [
+    ...arrayBlockValidator('slider'),
+    ...arrayBlockValidator('education'),
+    ...arrayBlockInfoValidator('info'),
+];
+
+export const validateCreateFAQ = [
+    ...generateLocalizedValidations(['title', 'question', 'answer']),
+];
+
+export const validateFAQArray = [
+    body().isArray({ min: 1 }).withMessage('FAQ must be a non-empty array'),
+
+    body('*.title').custom((value) => {
+        if (typeof value !== 'object' || !value) {
+            throw new Error('title must be a localized object');
+        }
+        return true;
+    }),
+    ...generateLocalizedValidations(['*.title', '*.question', '*.answer']),
+];
+
+export const validateCreateAboutUs = [
+    body('title')
+        .custom((value) => {
+            if (typeof value !== 'object' || !value) {
+                throw new Error('Title must be a localized object');
+            }
+            return true;
+        }),
+    body('title.ro').isString().trim().notEmpty().withMessage('Title in RO is required'),
+    body('title.ru').isString().trim().notEmpty().withMessage('Title in RU is required'),
+    body('title.en').isString().trim().notEmpty().withMessage('Title in EN is required'),
+
+    body('context')
+        .custom((value) => {
+            if (typeof value !== 'object' || !value) {
+                throw new Error('Context must be a localized object');
+            }
+            return true;
+        }),
+    body('context.ro').isString().trim().notEmpty().withMessage('Context in RO is required'),
+    body('context.ru').isString().trim().notEmpty().withMessage('Context in RU is required'),
+    body('context.en').isString().trim().notEmpty().withMessage('Context in EN is required'),
 ];
 
 export const validateResult: RequestHandler = (req, res, next) => {

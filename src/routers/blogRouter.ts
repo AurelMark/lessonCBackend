@@ -1,13 +1,20 @@
 import { Router } from 'express';
 import { getAllBlogNews, getBlogNews } from '@/controllers/blogController';
+import { apiLimiter } from '@/utils/helmetHandler';
 
 const router = Router();
 
 router
     .route('/')
-    .get(getAllBlogNews);
+    .get(
+        apiLimiter, 
+        getAllBlogNews
+    );
 router
     .route('/:slug')
-    .get(getBlogNews);
+    .get(
+        apiLimiter, 
+        getBlogNews
+    );
 
 export default router;

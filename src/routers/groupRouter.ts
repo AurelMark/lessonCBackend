@@ -5,12 +5,14 @@ import { sanitizeBody } from '@/middleware/sanitizeBody';
 import { validateHashId } from '@/middleware/validateHashId';
 import { authenticateUser, authorizePermissions } from '@/middleware/authMiddleware';
 import { statsLogger } from '@/middleware/statsLogger';
+import { apiLimiter } from '@/utils/helmetHandler';
 
 const router = Router();
 
 router
     .route('/')
     .get(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         validatePagination,
@@ -18,6 +20,7 @@ router
         getAllGroups
     )
     .post(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -30,14 +33,17 @@ router
 router
     .get(
         '/:hashId',
+        apiLimiter,
         statsLogger,
         validateHashId(),
         authenticateUser,
+        authorizePermissions('admin'),
         sanitizeBody,
         getGroupById
     )
     .patch(
         '/:hashId',
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -49,6 +55,7 @@ router
     )
     .delete(
         '/:hashId',
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),

@@ -21,6 +21,18 @@ export const login = catchAsync(async (req: Request, res: Response): Promise<voi
         req.socket.remoteAddress ||
         '';
 
+    const key = (login || email || '').toLowerCase().trim();
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const failedAttempts = await StatsLogModel.countDocuments({
+        attemptedLogin: key,
+        status: 'failed',
+        createdAt: { $gte: fifteenMinutesAgo },
+    });
+
+    if (failedAttempts >= 9) {
+        return res.redirect('https://www.youtube.com/watch?v=exVQb2eVDls');
+    }
+
     const logData: any = {
         ip,
         method: req.method,
@@ -37,7 +49,7 @@ export const login = catchAsync(async (req: Request, res: Response): Promise<voi
     const user = await UserModel.findOne({
         ...(email ? { email: email.trim() } : {}),
         ...(login ? { login: login.trim() } : {})
-    }).populate('groups',  'id');
+    }).populate('groups', 'id');
 
     const isValidUser = user && await comparePassword(password, user.password);
 
@@ -46,14 +58,16 @@ export const login = catchAsync(async (req: Request, res: Response): Promise<voi
         throw new UnauthenticatedError('Invalid credentials');
     }
 
-    const token = createJWT({ userId: user._id, role: user.role, groups: user.groups });
+    const token = createJWT({ userId: encodeId(user._id.toString()), role: user.role, groups: user.groups.map((g: any) => ({ id: encodeId(g.id) || encodeId(g._id?.toString() || '') })), isActive: user.isActive, isTempAccount: user.isTempAccount, isVerified: user.isVerified });
 
     const oneDay = 1000 * 60 * 60 * 24;
 
     res.cookie('token', token, {
         httpOnly: true,
         expires: new Date(Date.now() + oneDay),
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production' && !req.hostname.includes('localhost'),
     });
 
     await StatsLogModel.create({
@@ -69,7 +83,11 @@ export const login = catchAsync(async (req: Request, res: Response): Promise<voi
             id: encodeId(user._id.toString()),
             email: user.email,
             role: user.role,
-            groups: user.groups
+            groups: user.groups.map((g: any) => ({ id: encodeId(g.id) || encodeId(g._id?.toString() || '') })),
+            isActive: user.isActive,
+            isTempAccount: user.isTempAccount,
+            isVerified: user.isVerified,
+            login: user.login
         }
     });
 });
@@ -143,10 +161,22 @@ export const requestOtpLogin = catchAsync(async (req: Request, res: Response): P
 export const loginWithOtp = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { email, login, otpCode } = req.body;
 
+    const key = (login || email || '').toLowerCase().trim();
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const failedAttempts = await StatsLogModel.countDocuments({
+        attemptedLogin: key,
+        status: 'failed',
+        createdAt: { $gte: fifteenMinutesAgo },
+    });
+
+    if (failedAttempts >= 9) {
+        return res.redirect('https://www.youtube.com/watch?v=exVQb2eVDls');
+    }
+
     const user = await UserModel.findOne({
         ...(email ? { email } : {}),
         ...(login ? { login } : {})
-    }).populate('groups',  'id');
+    }).populate('groups', 'id');
 
     const parser = new UAParser(req.headers['user-agent'] || '');
     const ua = parser.getResult();
@@ -181,22 +211,29 @@ export const loginWithOtp = catchAsync(async (req: Request, res: Response): Prom
     user.otpExpiresAt = undefined;
     await user.save();
 
-    const token = createJWT({ userId: user._id, role: user.role, groups: user.groups });
+    const token = createJWT({ userId: encodeId(user._id.toString()), role: user.role, groups: user.groups.map((g: any) => ({ id: encodeId(g.id) || encodeId(g._id?.toString() || '') })), isActive: user.isActive, isTempAccount: user.isTempAccount, isVerified: user.isVerified });
+
 
     res.cookie('token', token, {
         httpOnly: true,
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' && !req.hostname.includes('localhost'),
+        sameSite: 'lax',
+        path: '/',
     });
 
     res.status(StatusCodes.OK).json({
         success: true,
         message: 'Logged in via OTP successfully',
         user: {
-            id: user._id,
+            id: encodeId(user._id.toString()),
             email: user.email,
             role: user.role,
-            groups: user.groups
+            groups: user.groups.map((g: any) => ({ id: encodeId(g.id) || encodeId(g._id?.toString() || '') })),
+            isActive: user.isActive,
+            isTempAccount: user.isTempAccount,
+            isVerified: user.isVerified,
+            login: user.login
         }
     });
 });

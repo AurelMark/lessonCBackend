@@ -27,7 +27,7 @@ export const createCourse = catchAsync(async (req: Request, res: Response): Prom
         slug,
     });
 
-    res.status(StatusCodes.CREATED).json({ course });
+    res.status(StatusCodes.CREATED).json(course);
 });
 
 export const getCourse = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -40,42 +40,34 @@ export const getCourse = catchAsync(async (req: Request, res: Response): Promise
 
     const subCourses = await SubCourseModel.find({ courseSlug: slug }).lean();
 
-    const cleanCourse = omitFields(course, ['_id', '__v', 'createdAt', 'updatedAt']);
+    const cleanCourse = omitFields(course, ['__v', 'createdAt', 'updatedAt']);
     const cleanSubcourses = subCourses.map((subDoc) =>
-        omitFields(subDoc, ['_id', '__v', 'createdAt', 'updatedAt'])
+        omitFields(subDoc, ['__v', 'createdAt', 'updatedAt'])
     );
 
     res.status(StatusCodes.OK).json({
-        course: cleanCourse,
-        subcourses: cleanSubcourses,
+        course: { ...cleanCourse, id: course._id ? encodeId(course._id.toString()) : undefined, },
+        subcourses: cleanSubcourses.map((sc) => ({
+            ...sc,
+            id: sc._id ? encodeId(sc._id.toString()) : undefined,
+        })),
     });
 });
 
 export const updateCourse = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { realId } = req;
-    delete req.body.slug;
     const { title, ...reqBody } = req.body;
-    let baseSlug = slugify(title.ro, { lower: true, strict: true });
-    let slug = baseSlug;
-    let exists = await CourseModel.findOne({ slug });
-    let counter = 1;
-    while (exists) {
-        slug = `${baseSlug}-${counter}`;
-        exists = await CourseModel.findOne({ slug });
-        counter++;
-    };
 
     const course = await CourseModel.findByIdAndUpdate(realId, {
         title,
         ...reqBody,
-        slug,
     }, { new: true });
 
     if (!course) {
         res.status(StatusCodes.NOT_FOUND).json({ message: 'News not found' });
     }
 
-    res.status(StatusCodes.OK).json({ course });
+    res.status(StatusCodes.OK).json(course);
 });
 
 export const deleteCourse = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -106,14 +98,14 @@ export const getAllCourses = catchAsync(async (req: Request, res: Response): Pro
 
     const total = await CourseModel.countDocuments(searchFilter);
     const totalPages = Math.ceil(total / limit);
-    const news = await CourseModel.find(searchFilter)
+    const courses = await CourseModel.find(searchFilter)
         .skip(skip)
         .limit(limit);
 
-    const currentCourseCount = news.length;
+    const currentCourseCount = courses.length;
 
     res.status(StatusCodes.OK).json({
-        data: news,
+        data: courses,
         total,
         totalPages,
         currentPage: page,
@@ -206,18 +198,17 @@ export const updateSubCourse = catchAsync(async (req: Request, res: Response): P
         throw new NotFoundError('SubCourse not found.');
     }
 
-    res.status(StatusCodes.OK).json({ subcourse: subCourse });
+    res.status(StatusCodes.OK).json(subCourse);
 });
 
 export const deleteSubCourse = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { courseSlug } = req.params;
-    const { id } = req.body;
+    const { courseSlug, hashId } = req.params;
 
-    if (!id) {
+    if (!hashId) {
         throw new NotFoundError('SubCourse id must be provided for deletion.');
     }
 
-    const realId = decodeIdSafe(id);
+    const realId = decodeIdSafe(hashId);
 
     if (!realId) {
         throw new BadRequestError('Invalid SubCourse id provided.');

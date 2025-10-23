@@ -1,38 +1,147 @@
-import { listPublicUploads, listUploads, listPrivateUploads, getPublicFolderContent, getPrivateFolderContent, createFolder, deleteFolder, uploadFiles, deleteFile, deleteMultipleFiles, renameFile } from '@/controllers/uploadsController';
+import { listPublicUploads, listUploads, listPrivateUploads, getPublicFolderContent, getPrivateFolderContent, createFolder, deleteFolder, uploadFiles, deleteFile, deleteMultipleFiles, renameFile, streamPrivateFile, uploadFilesHomepage, deleteFileHomepage } from '@/controllers/uploadsController';
 import { authenticateUser, authorizePermissions } from '@/middleware/authMiddleware';
 import { statsLogger } from '@/middleware/statsLogger';
 import { uploadMiddleware } from '@/middleware/uploadMiddleware';
 import { validateCreateFolder, validateRenameFile, validateResult } from '@/middleware/validationMiddleware';
+import { apiLimiter } from '@/utils/helmetHandler';
 import { Router } from 'express';
 
 const router = Router();
 
 router
-    .get('/', authenticateUser, statsLogger, listUploads)
-    .post('/', authenticateUser, statsLogger, authorizePermissions('admin'), validateCreateFolder, validateResult, createFolder);
+    .get('/',
+        apiLimiter,
+        authenticateUser,
+        statsLogger,
+        listUploads
+    )
+    .post('/',
+        apiLimiter,
+        authenticateUser,
+        statsLogger,
+        authorizePermissions('admin'),
+        validateCreateFolder,
+        validateResult,
+        createFolder
+    );
 
 router
-    .get('/public/', listPublicUploads);
+    .get('/public/',
+        apiLimiter,
+        statsLogger,
+        listPublicUploads
+    );
 
 router
-    .get('/public/:slug/:nameFolder', getPublicFolderContent);
-
-
-router
-    .get('/private/', statsLogger, authenticateUser, listPrivateUploads);
-
-router
-    .get('/private/:slug/:nameFolder', statsLogger, authenticateUser, getPrivateFolderContent);
+    .get('/public/:slug/',
+        apiLimiter,
+        statsLogger,
+        getPublicFolderContent);
 
 router
-    .post('/:scope/:category/:folder', statsLogger, authenticateUser, authorizePermissions('admin'), uploadMiddleware, uploadFiles)
-    .delete('/:scope/:category/:folder', statsLogger, authenticateUser, authorizePermissions('admin'), deleteFolder);
+    .delete('/:scope/:category/:filename',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        deleteFileHomepage
+    );
 
 router
-    .delete('/:scope/:category/:folder/multiple', statsLogger, authenticateUser, authorizePermissions('admin'), deleteMultipleFiles);
+    .get('/public/:slug/:nameFolder',
+        apiLimiter,
+        statsLogger,
+        getPublicFolderContent
+    );
+
 router
-    .patch('/:scope/:category/:folder/rename', statsLogger, authenticateUser, authorizePermissions('admin'), validateRenameFile, validateResult, renameFile);
+    .get('/private/',
+        apiLimiter,
+        authenticateUser,
+        statsLogger,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        listPrivateUploads
+    );
+
 router
-    .delete('/:scope/:category/:folder/:filename', statsLogger, authenticateUser, authorizePermissions('admin'), deleteFile);
+    .get('/private/:slug/',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        getPrivateFolderContent
+    );
+router
+    .get('/private/:slug/:nameFolder',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        getPrivateFolderContent
+    );
+
+router.get(
+    '/private/:slug/:nameFolder/:filename',
+    apiLimiter,
+    authenticateUser,
+    statsLogger,
+    streamPrivateFile
+);
+
+router
+    .post('/:scope/:category',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        uploadMiddleware,
+        uploadFilesHomepage
+    );
+
+router
+    .post('/:scope/:category/:folder',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        uploadMiddleware,
+        uploadFiles
+    )
+    .delete('/:scope/:category/:folder',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        deleteFolder
+    );
+
+router
+    .delete('/:scope/:category/:folder/multiple',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        deleteMultipleFiles
+    );
+router
+    .patch('/:scope/:category/:folder/rename',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateRenameFile,
+        validateResult,
+        renameFile
+    );
+router
+    .delete('/:scope/:category/:folder/:filename',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        deleteFile
+    );
 
 export default router;

@@ -5,18 +5,21 @@ import { createNews, deleteNews, getAllNews, getNews, updateNews } from '@/contr
 import { sanitizeBody } from '@/middleware/sanitizeBody';
 import { authenticateUser, authorizePermissions } from '@/middleware/authMiddleware';
 import { statsLogger } from '@/middleware/statsLogger';
+import { apiLimiter } from '@/utils/helmetHandler';
 
 const router = Router();
 
 router
     .route('/')
     .get(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         getAllNews,
         authorizePermissions('admin'),
     )
     .post(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -29,6 +32,7 @@ router
 router
     .route('/:hashId')
     .delete(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -36,6 +40,7 @@ router
         deleteNews
     )
     .patch(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -48,6 +53,9 @@ router
 
 router
     .route('/slug/:slug')
-    .get(getNews);
+    .get(
+        apiLimiter, 
+        getNews
+    );
 
 export default router;

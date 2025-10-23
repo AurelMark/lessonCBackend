@@ -6,6 +6,7 @@ export type TContactsProps = {
     message: string;
     phone: string;
     email: string;
+    isReply: boolean
 };
 
 const ContactsSchema = new Schema<TContactsProps>({
@@ -14,6 +15,7 @@ const ContactsSchema = new Schema<TContactsProps>({
     message: { type: String, required: true },
     phone: { type: String, required: true },
     email: { type: String, required: true, trim: true },
+    isReply: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const ContactsModel = model<TContactsProps>('Contacts', ContactsSchema);

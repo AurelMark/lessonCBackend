@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 import ContactsModel from '@/models/ContactsModel';
 import { StatusCodes } from 'http-status-codes';
 import { sendMail } from '@/utils/mailer';
+import { decodeIdSafe, encodeId } from '@/utils/idEncoder';
+import mongoose from 'mongoose';
 
 export const createContact = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { firstName, lastName, message, phone, email } = req.body;
@@ -30,25 +32,36 @@ export const getAllContacts = catchAsync(async (req: Request, res: Response): Pr
 
     const totalContacts = await ContactsModel.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalContacts / limit);
+
     const contacts = await ContactsModel.find(searchFilter)
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
-    const currentCourseCount = contacts.length;
+    const result = contacts.map(contact => {
+
+        const { _id, ...rest } = contact;
+        return {
+            id: _id ? encodeId(_id.toString()) : null,
+            ...rest
+        };
+    });
 
     res.status(StatusCodes.OK).json({
-        data: contacts,
-        totalContacts,
+        data: result,
+        total: totalContacts,
         totalPages,
         currentPage: page,
-        contactsPerPage: currentCourseCount
+        contactsPerPage: result.length
     });
 });
 
-export const deleteContact = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params;
 
-    const contact = await ContactsModel.findById(id);
+export const deleteContact = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const { hashId } = req.params;
+
+    const realId = decodeIdSafe(hashId);
+    const contact = await ContactsModel.findById(realId);
     if (!contact) {
         throw new NotFoundError('Contact not found');
     }
@@ -59,20 +72,32 @@ export const deleteContact = catchAsync(async (req: Request, res: Response): Pro
 });
 
 export const sendContactReply = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { email, fullName, subject, message } = req.body;
+    const { id, email, fullName, subject, message } = req.body;
 
-    const htmlContent = `
+    console.log('req', req.body);
+
+    const realId = decodeIdSafe(id);
+
+
+
+    if (realId) {
+        await ContactsModel.updateOne(
+            { _id: new mongoose.Types.ObjectId(realId) },
+            { $set: { isReply: true } }
+        );
+        const htmlContent = `
       <h2>${fullName},</h2>
       <p style="font-size:16px">${message}</p>
       <br/>
       <p>Best regards,<br/>Phonetics Learning Centre</p>
     `;
 
-    await sendMail(
-        email,
-        subject,
-        htmlContent
-    );
+        await sendMail(
+            email,
+            subject,
+            htmlContent
+        );
+    }
 
     res.status(StatusCodes.OK).json({
         success: true,

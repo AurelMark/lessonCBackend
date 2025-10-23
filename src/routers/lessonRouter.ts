@@ -4,6 +4,7 @@ import { sanitizeBody } from '@/middleware/sanitizeBody';
 import { statsLogger } from '@/middleware/statsLogger';
 import { validateHashId } from '@/middleware/validateHashId';
 import { validateCreateLesson, validatePagination, validateResult } from '@/middleware/validationMiddleware';
+import { apiLimiter } from '@/utils/helmetHandler';
 import { Router } from 'express';
 
 const router = Router();
@@ -11,6 +12,7 @@ const router = Router();
 router
     .route('/')
     .get(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         sanitizeBody,
@@ -18,6 +20,7 @@ router
         validateResult,
         getAllLessons)
     .post(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -30,6 +33,7 @@ router
 router
     .route('/:slug')
     .get(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         sanitizeBody,
@@ -39,6 +43,7 @@ router
 router
     .route('/:hashId')
     .delete(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),
@@ -46,6 +51,7 @@ router
         deleteLesson
     )
     .patch(
+        apiLimiter,
         statsLogger,
         authenticateUser,
         authorizePermissions('admin'),

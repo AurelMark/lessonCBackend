@@ -1,45 +1,142 @@
 import { Router } from 'express';
-import { createUser, deleteUser, forgotPassword, generateUsers, getAllUsers, getUser, patchUser, resendOtpCode, resetPassword, toggleManyUserStatus, toggleUserActiveStatus, updateMyselfUserData, verifyOtpCode } from '@/controllers/userController';
+import { createUser, deleteUser, forgotPassword, generateUsers, getAllUsers, getUser, getUserById, patchUser, resendOtpCode, resetPassword, toggleManyUserStatus, toggleUserActiveStatus, updateMyselfUserData, verifyOtpCode } from '@/controllers/userController';
 import { validateCreateUser, validateGenerateUsers, validateManyIds, validateOtpCode, validateResendOtpAndForgotPassword, validateResetPassword, validateResult, validateUpdateUser, validateUpdateUserPublic } from '@/middleware/validationMiddleware';
 import { sanitizeBody } from '@/middleware/sanitizeBody';
 import { validateHashId } from '@/middleware/validateHashId';
 import { authenticateUser, authorizePermissions } from '@/middleware/authMiddleware';
 import { statsLogger } from '@/middleware/statsLogger';
+import { apiLimiter } from '@/utils/helmetHandler';
 
 const router = Router();
 
 router
-    .get('/', statsLogger, authenticateUser, sanitizeBody, getAllUsers)
-    .post('/', statsLogger, authenticateUser, sanitizeBody, validateCreateUser, validateResult, createUser);
+    .get('/',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        sanitizeBody,
+        getAllUsers
+    )
+    .post('/',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        sanitizeBody,
+        authorizePermissions('admin'),
+        validateCreateUser,
+        validateResult,
+        createUser
+    );
 
 router
-    .post('/verify', statsLogger, validateOtpCode, validateResult, verifyOtpCode);
+    .post('/verify',
+        apiLimiter,
+        statsLogger,
+        validateOtpCode,
+        validateResult,
+        verifyOtpCode
+    );
 
 router
-    .post('/resend-otp', statsLogger, validateResendOtpAndForgotPassword, validateResult, resendOtpCode);
+    .post('/resend-otp',
+        apiLimiter,
+        statsLogger,
+        validateResendOtpAndForgotPassword,
+        validateResult,
+        resendOtpCode
+    );
 
 router
-    .post('/forgot-password', statsLogger, validateResendOtpAndForgotPassword, validateResult, forgotPassword);
+    .post('/forgot-password',
+        apiLimiter,
+        statsLogger,
+        validateResendOtpAndForgotPassword,
+        validateResult,
+        forgotPassword
+    );
 router
-    .post('/reset-password', statsLogger, validateResetPassword, validateResult, resetPassword);
+    .post('/reset-password',
+        apiLimiter,
+        statsLogger,
+        validateResetPassword,
+        validateResult,
+        resetPassword
+    );
 
 router
-    .post('/generate', statsLogger, authenticateUser, authorizePermissions('admin'), validateGenerateUsers, generateUsers);
+    .post('/generate',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateGenerateUsers,
+        generateUsers
+    );
 
 router
-    .get('/profile', statsLogger, authenticateUser, sanitizeBody, getUser);
+    .get('/profile',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        sanitizeBody,
+        getUser);
 
 router
-    .patch('/profile/:hashId', statsLogger, authenticateUser, validateHashId(), authorizePermissions('admin'), sanitizeBody, validateUpdateUserPublic, validateResult, updateMyselfUserData);
+    .patch('/profile/:hashId',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        validateHashId(),
+        sanitizeBody,
+        validateUpdateUserPublic,
+        validateResult,
+        updateMyselfUserData);
 
 router
-    .patch('/activate', statsLogger, authenticateUser, authorizePermissions('admin'), validateManyIds, validateResult, toggleManyUserStatus);
+    .patch('/activate',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateManyIds,
+        validateResult,
+        toggleManyUserStatus
+    );
 
 router
-    .patch('/:hashId', statsLogger, authenticateUser, authorizePermissions('admin'), validateHashId(), validateUpdateUser, validateResult, patchUser)
-    .delete('/:hashId', statsLogger, authenticateUser, validateHashId(), deleteUser);
+    .get('/:hashId',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateHashId(),
+        getUserById
+    )
+    .patch('/:hashId',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateHashId(),
+        validateUpdateUser,
+        validateResult,
+        patchUser
+    )
+    .delete('/:hashId',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        validateHashId(),
+        deleteUser);
 
 router
-    .patch('/:hashId/activate', statsLogger, authorizePermissions('admin'), authenticateUser, validateHashId(), toggleUserActiveStatus);
+    .patch('/:hashId/activate',
+        apiLimiter,
+        statsLogger,
+        authenticateUser,
+        authorizePermissions('admin'),
+        validateHashId(),
+        toggleUserActiveStatus
+    );
 
 export default router;

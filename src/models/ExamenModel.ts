@@ -10,6 +10,7 @@ export type TExam = {
     createdBy: Types.ObjectId;
     responsible: Types.ObjectId[];
     lessons?: Types.ObjectId[];
+    timer: { type: Number }
     groups?: Types.ObjectId[];
     questions: {
         title: string;
@@ -46,6 +47,7 @@ const ExamSchema = new Schema<TExam>(
         responsible: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
         lessons: [{ type: Schema.Types.ObjectId, ref: 'Lesson' }],
         groups: [{ type: Schema.Types.ObjectId, ref: 'Group' }],
+        timer: { type: Number },
         questions: [
             {
                 title: { type: String, required: true },

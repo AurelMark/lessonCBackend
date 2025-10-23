@@ -10,11 +10,11 @@ export type TCourseProps = {
     features: {
         lectures: string;
         quizzes: string;
-        duration: number;
+        duration: string;
         durationType: string;
         skillLevel: string;
         language: string;
-        students: number;
+        students: string;
         asssessments: boolean;
     },
     alert?: {
@@ -33,11 +33,11 @@ const CourseSchema = new Schema<TCourseProps>({
     features: {
         lectures: { type: String, required: true },
         quizzes: { type: String, required: true },
-        duration: { type: Number, required: true },
+        duration: { type: String, required: true },
         durationType: { type: String, required: true },
         skillLevel: { type: String, required: true },
         language: { type: String, required: true },
-        students: { type: Number, required: true },
+        students: { type: String, required: true },
         asssessments: { type: Boolean, required: true }
     },
     alert: [
@@ -52,7 +52,7 @@ const CourseSchema = new Schema<TCourseProps>({
             },
             content: createLocalizedSchema(),
         },
-    ]
+    ],
 }, { timestamps: true });
 
 const CourseModel = model<TCourseProps>('Course', CourseSchema);

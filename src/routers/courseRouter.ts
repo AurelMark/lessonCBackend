@@ -4,14 +4,19 @@ import { sanitizeBody } from '@/middleware/sanitizeBody';
 import { statsLogger } from '@/middleware/statsLogger';
 import { validateHashId } from '@/middleware/validateHashId';
 import { validateCreateCourse, validateCreateSubCourse, validateResult } from '@/middleware/validationMiddleware';
+import { apiLimiter } from '@/utils/helmetHandler';
 import { Router } from 'express';
 
 const router = Router();
 
 router
     .route('/')
-    .get(getAllCourses)
+    .get(
+        apiLimiter,
+        getAllCourses
+    )
     .post(
+        apiLimiter,
         authenticateUser,
         authorizePermissions('admin'),
         statsLogger,
@@ -24,6 +29,7 @@ router
 router
     .route('/:hashId')
     .delete(
+        apiLimiter,
         validateHashId(),
         authenticateUser,
         statsLogger,
@@ -32,6 +38,7 @@ router
         deleteCourse
     )
     .patch(
+        apiLimiter,
         validateHashId(),
         authenticateUser,
         statsLogger,
@@ -42,12 +49,19 @@ router
 
 router
     .route('/slug/:slug')
-    .get(getCourse);
+    .get(
+        apiLimiter,
+        getCourse
+    );
 
 router
     .route('/slug/:courseSlug/subcourses')
-    .get(getAllSubCourses)
+    .get(
+        apiLimiter,
+        getAllSubCourses
+    )
     .post(
+        apiLimiter,
         authenticateUser,
         statsLogger,
         authorizePermissions('admin'),
@@ -60,10 +74,12 @@ router
 router
     .route('/slug/:courseSlug/subcourses/:hashId')
     .get(
+        apiLimiter,
         validateHashId(),
         sanitizeBody,
         getSubCourse
     ).patch(
+        apiLimiter,
         validateHashId(),
         authenticateUser,
         statsLogger,
@@ -72,6 +88,7 @@ router
         updateSubCourse
     )
     .delete(
+        apiLimiter,
         validateHashId(),
         authenticateUser,
         statsLogger,

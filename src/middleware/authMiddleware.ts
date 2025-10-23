@@ -27,15 +27,14 @@ export const authenticateUser = async (
 
     try {
         const payload = verifyJWT(token);
-
-        const userId = payload.userId as string;
-        const role = payload.role;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { iat: _, exp: __, userId, role, ...rest } = payload;
 
         if (!userId || !isTRole(role)) {
             throw new UnauthenticatedError('authentication invalid');
         }
 
-        req.user = { userId, role };
+        req.user = { userId, role, ...rest };
         next();
     } catch {
         throw new UnauthenticatedError('authentication invalid');

@@ -6,9 +6,14 @@ import { mkdir, access, rm, unlink, rename } from 'fs/promises';
 import path from 'path';
 import { catchAsync } from '@/utils/asyncHandler';
 import slugify from 'slugify';
+import mime from 'mime-types';
+
+function getMimeType(filePath: string) {
+    return mime.lookup(filePath) || 'application/octet-stream';
+}
 
 const allowedPaths = {
-    public: ['blog', 'course', 'subcourse'],
+    public: ['blog', 'course', 'subcourse', 'homepage'],
     private: ['lesson', 'examen', 'stats', 'user'],
 };
 
@@ -51,7 +56,7 @@ export const listPublicUploads = catchAsync(async (req: Request, res: Response) 
         url: `/uploads/public/${safeSlug ? safeSlug + '/' : ''}${file.name}`
     }));
 
-    res.status(StatusCodes.OK).json({ files: fileList });
+    res.status(StatusCodes.OK).json(fileList);
 });
 
 export const listPrivateUploads = catchAsync(async (req: Request, res: Response) => {
@@ -71,7 +76,7 @@ export const listPrivateUploads = catchAsync(async (req: Request, res: Response)
         url: `/uploads/private/${safeSlug ? safeSlug + '/' : ''}${file.name}`
     }));
 
-    res.status(StatusCodes.OK).json({ files: fileList });
+    res.status(StatusCodes.OK).json(fileList);
 });
 
 export const getPublicFolderContent = catchAsync(async (req: Request, res: Response) => {
@@ -79,7 +84,9 @@ export const getPublicFolderContent = catchAsync(async (req: Request, res: Respo
     const safeSlug = (slug || '').replace(/\.\.\//g, '');
     const safeNameFolder = (nameFolder || '').replace(/\.\.\//g, '');
 
-    const uploadsPath = path.join(process.cwd(), 'uploads', 'public', safeSlug, safeNameFolder);
+    const uploadsPath = nameFolder
+        ? path.join(process.cwd(), 'uploads', 'public', safeSlug, safeNameFolder)
+        : path.join(process.cwd(), 'uploads', 'public', safeSlug);
 
     if (!fs.existsSync(uploadsPath)) {
         return res.status(StatusCodes.NOT_FOUND).json({ message: 'Folder not found' });
@@ -90,10 +97,11 @@ export const getPublicFolderContent = catchAsync(async (req: Request, res: Respo
     const fileList = files.map(file => ({
         name: file.name,
         type: file.isDirectory() ? 'folder' : 'file',
-        url: `/uploads/${safeNameFolder}/${file.name}`
+        url: nameFolder
+            ? path.posix.join('/uploads/public', safeSlug, safeNameFolder, file.name)
+            : path.posix.join('/uploads/public', safeSlug, file.name)
     }));
-
-    res.status(StatusCodes.OK).json({ files: fileList });
+    res.status(StatusCodes.OK).json(fileList);
 });
 
 export const getPrivateFolderContent = catchAsync(async (req: Request, res: Response) => {
@@ -101,7 +109,9 @@ export const getPrivateFolderContent = catchAsync(async (req: Request, res: Resp
     const safeSlug = (slug || '').replace(/\.\.\//g, '');
     const safeNameFolder = (nameFolder || '').replace(/\.\.\//g, '');
 
-    const uploadsPath = path.join(process.cwd(), 'uploads', 'private', safeSlug, safeNameFolder);
+    const uploadsPath = nameFolder
+        ? path.join(process.cwd(), 'uploads', 'private', safeSlug, safeNameFolder)
+        : path.join(process.cwd(), 'uploads', 'private', safeSlug);
 
     if (!fs.existsSync(uploadsPath)) {
         return res.status(StatusCodes.NOT_FOUND).json({ message: 'Folder not found' });
@@ -112,10 +122,11 @@ export const getPrivateFolderContent = catchAsync(async (req: Request, res: Resp
     const fileList = files.map(file => ({
         name: file.name,
         type: file.isDirectory() ? 'folder' : 'file',
-        url: `/uploads/private/${safeSlug}/${safeNameFolder}/${file.name}`
+        url: nameFolder
+            ? path.posix.join('/uploads/private', safeSlug, safeNameFolder, file.name)
+            : path.posix.join('/uploads/private', safeSlug, file.name)
     }));
-
-    res.status(StatusCodes.OK).json({ files: fileList });
+    res.status(StatusCodes.OK).json(fileList);
 });
 
 export const createFolder = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -190,8 +201,12 @@ export const deleteFolder = catchAsync(async (req: Request, res: Response): Prom
 
 export const uploadFiles = catchAsync(async (req: Request, res: Response) => {
     const normalizePath = (fullPath: string) => {
-        let relPath = path.relative(path.join(process.cwd(), 'uploads', 'public'), fullPath).replace(/\\/g, '/');
-        return '/uploads/' + relPath;
+        let relPath = path.relative(
+            path.join(process.cwd(), 'uploads'),
+            fullPath
+        ).replace(/\\/g, '/');
+
+        return path.posix.normalize('/uploads/' + relPath);
     };
 
     const files: Express.Multer.File[] = Array.isArray(req.files) ? req.files : [];
@@ -208,6 +223,28 @@ export const uploadFiles = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+export const uploadFilesHomepage = catchAsync(async (req: Request, res: Response) => {
+    const normalizePath = (fullPath: string) => {
+        let relPath = path.relative(
+            path.join(process.cwd(), 'uploads'),
+            fullPath
+        ).replace(/\\/g, '/');
+        return path.posix.normalize('/uploads/' + relPath);
+    };
+
+    const files: Express.Multer.File[] = Array.isArray(req.files) ? req.files : [];
+    const normalizedFiles = files
+        .filter((file) => file && typeof file.path === 'string')
+        .map((file) => ({
+            ...file,
+            path: normalizePath(file.path),
+        }));
+
+    res.status(StatusCodes.OK).json({
+        success: true,
+        files: normalizedFiles,
+    });
+});
 
 
 export const deleteFile = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -306,3 +343,71 @@ export const renameFile = catchAsync(async (req: Request, res: Response): Promis
     });
 });
 
+
+export const streamPrivateFile = catchAsync(async (req, res) => {
+    const { slug, nameFolder, filename } = req.params;
+    const safeSlug = (slug || '').replace(/\.\.\//g, '');
+    const safeNameFolder = (nameFolder || '').replace(/\.\.\//g, '');
+    const safeFilename = (filename || '').replace(/\.\.\//g, '');
+
+    const filePath = path.join(
+        process.cwd(),
+        'uploads',
+        'private',
+        safeSlug,
+        safeNameFolder,
+        safeFilename
+    );
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    if (range) {
+        const parts = range.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunkSize = end - start + 1;
+        const file = fs.createReadStream(filePath, { start, end });
+        res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type': getMimeType(filePath),
+        });
+        file.pipe(res);
+    } else {
+        res.writeHead(200, {
+            'Content-Length': fileSize,
+            'Content-Type': getMimeType(filePath),
+            'Accept-Ranges': 'bytes',
+        });
+        fs.createReadStream(filePath).pipe(res);
+    }
+});
+
+export const deleteFileHomepage = async (req: Request, res: Response) => {
+    const { scope, category, filename } = req.params;
+
+    if (!scope || !category || !filename || category !== 'homepage') {
+        res.status(StatusCodes.BAD_REQUEST).json({ message: 'Missing required parameters or not homepage category' });
+        return;
+    }
+
+    const filePath = path.join(process.cwd(), 'uploads', scope, category, filename);
+
+    try {
+        await unlink(filePath);
+        res.status(StatusCodes.OK).json({ success: true, message: 'File deleted successfully' });
+    } catch (error: any) {
+        if (error.code === 'ENOENT') {
+            res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'File not found' });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to delete file', error });
+        }
+    }
+};

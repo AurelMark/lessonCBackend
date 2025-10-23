@@ -7,25 +7,35 @@ const storage = multer.diskStorage({
     destination: (req, _file, cb) => {
         const { scope, category, folder } = req.params;
 
-        if (!scope || !category || !folder) {
-            return cb(new Error('Missing scope, category, or folder'), '');
+        if (!scope || !category) {
+            return cb(new Error('Missing scope or category'), '');
         }
 
         const safeCategory = slugify(category, { lower: true, strict: true });
-        const safeFolder = slugify(folder, { lower: true, strict: true });
-        const uploadPath = path.join(process.cwd(), 'uploads', scope, safeCategory, safeFolder);
+        const uploadParts = [process.cwd(), 'uploads', scope, safeCategory];
+
+        if (folder) {
+            const safeFolder = slugify(folder, { lower: true, strict: true });
+            uploadParts.push(safeFolder);
+        }
+
+        const uploadPath = path.join(...uploadParts);
 
         fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);
     },
-
     filename: (req, file, cb) => {
         const { scope, category, folder } = req.params;
 
         const safeCategory = slugify(category, { lower: true, strict: true });
-        const safeFolder = slugify(folder, { lower: true, strict: true });
+        const uploadParts = [process.cwd(), 'uploads', scope, safeCategory];
 
-        const uploadDir = path.join(process.cwd(), 'uploads', scope, safeCategory, safeFolder);
+        if (folder) {
+            const safeFolder = slugify(folder, { lower: true, strict: true });
+            uploadParts.push(safeFolder);
+        }
+
+        const uploadDir = path.join(...uploadParts);
 
         const ext = path.extname(file.originalname);
         const base = path.basename(file.originalname, ext);
@@ -41,6 +51,7 @@ const storage = multer.diskStorage({
 
         cb(null, filename);
     }
+
 });
 
 export const uploadMiddleware = multer({

@@ -36,16 +36,37 @@ export const createExam = catchAsync(async (req: Request, res: Response): Promis
         });
     }
 
-    const decodedResponsible = responsible
-        .map(decodeIdSafe)
-        .filter(Boolean);
+    function decodeIds(arr: any[]) {
+        return arr.map(decodeIdSafe);
+    }
+
+    const decodedResponsible = decodeIds(responsible).filter(Boolean);
+    const decodedLessons = decodeIds(lessons).filter(Boolean);
+    const decodedGroups = decodeIds(groups).filter(Boolean);
 
     if (decodedResponsible.length !== responsible.length) {
         res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
             message: 'One or more responsible IDs are invalid'
         });
+        return;
     }
+    if (decodedLessons.length !== lessons.length) {
+        res.status(StatusCodes.BAD_REQUEST).json({
+            success: false,
+            message: 'One or more lesson IDs are invalid'
+        });
+        return;
+    }
+    if (decodedGroups.length !== groups.length) {
+        res.status(StatusCodes.BAD_REQUEST).json({
+            success: false,
+            message: 'One or more group IDs are invalid'
+        });
+        return;
+    }
+
+
 
     const baseSlug = slugify(title.ro, { lower: true, strict: true });
     let slug = baseSlug;
@@ -65,19 +86,15 @@ export const createExam = catchAsync(async (req: Request, res: Response): Promis
         slug,
         createdBy: decodedCreatedBy,
         responsible: decodedResponsible,
-        lessons,
-        groups,
+        lessons: decodedLessons,
+        groups: decodedGroups,
         questions,
         deadline,
         isActive,
         timer
     });
 
-    res.status(StatusCodes.CREATED).json({
-        success: true,
-        message: 'Exam created successfully',
-        exam
-    });
+    res.status(StatusCodes.CREATED).json(exam);
 });
 
 export const getExam = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -88,7 +105,7 @@ export const getExam = catchAsync(async (req: Request, res: Response): Promise<v
         .populate('lessons', 'title imageUrl description slug')
         .populate('responsible', 'firstName lastName role email')
         .populate('createdBy', 'firstName lastName role email')
-        .populate('attempts.user'); 
+        .populate('attempts.user');
 
     if (!exam) {
         throw new NotFoundError(`Exam with slug "${slug}" not found`);
@@ -224,7 +241,6 @@ export const getAllExams = catchAsync(async (req: Request, res: Response): Promi
     const totalPages = Math.ceil(totalExams / limit);
 
     res.status(StatusCodes.OK).json({
-        success: true,
         totalExams,
         totalPages,
         currentPage: page,
@@ -254,7 +270,6 @@ export const deleteExam = catchAsync(async (req: Request, res: Response): Promis
 
 export const updateExam = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { realId } = req;
-    delete req.body.slug;
 
     const {
         title,
@@ -285,16 +300,6 @@ export const updateExam = catchAsync(async (req: Request, res: Response): Promis
         throw new BadRequestError('One or more lesson IDs are invalid');
     }
 
-    let baseSlug = slugify(title.ro, { lower: true, strict: true });
-    let slug = baseSlug;
-    let exists = await ExamModel.findOne({ slug });
-    let counter = 1;
-    while (exists && exists._id.toString() !== realId) {
-        slug = `${baseSlug}-${counter}`;
-        exists = await ExamModel.findOne({ slug });
-        counter++;
-    }
-
     const updatedExam = await ExamModel.findByIdAndUpdate(
         realId,
         {
@@ -304,7 +309,6 @@ export const updateExam = catchAsync(async (req: Request, res: Response): Promis
             responsible: decodedResponsible,
             groups: decodedGroups,
             lessons: decodedLessons,
-            slug,
         },
         { new: true }
     );
@@ -325,7 +329,7 @@ export const updateExam = catchAsync(async (req: Request, res: Response): Promis
         )
     ]);
 
-    res.status(StatusCodes.OK).json({ news: updatedExam });
+    res.status(StatusCodes.OK).json(updatedExam);
 });
 
 export const submitExam = catchAsync(async (req: Request, res: Response) => {
@@ -396,7 +400,235 @@ export const submitExam = catchAsync(async (req: Request, res: Response) => {
     res.status(StatusCodes.OK).json({
         success: true,
         score,
-        total: exam.questions.length,
-        details: submittedAnswers,
     });
 });
+
+export const getExamsByUserGroups = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const user = (req as any).user;
+    const groupIds: string[] = user.groups.map((group: any) => decodeIdSafe(group.id));
+
+    if (!groupIds.length) {
+        res.status(StatusCodes.OK).json({
+            totalExams: 0,
+            totalPages: 0,
+            currentPage: 1,
+            examPerPage: 0,
+            data: []
+        });
+        return;
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const [exams, totalExams] = await Promise.all([
+        ExamModel.find({ groups: { $in: groupIds } })
+            .populate('groups', 'title')
+            .populate('lessons', 'title imageUrl description slug')
+            .populate('responsible', 'firstName lastName role email')
+            .populate('createdBy', 'firstName lastName role email')
+            .populate('attempts')
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        ExamModel.countDocuments({ groups: { $in: groupIds } })
+    ]);
+
+    const cleanObject = (obj: any) => {
+        if (!obj || typeof obj !== 'object' || !obj._id) return obj;
+        const { _id, ...rest } = obj;
+        return {
+            ...rest,
+            id: encodeId(_id.toString())
+        };
+    };
+
+    const cleanArray = (arr: any[]) =>
+        arr.map((item) => cleanObject(item)).filter(Boolean);
+
+    const cleanAnswers = (answers: any[]) =>
+        answers.map((ans) => {
+            const { _id, ...rest } = ans;
+            return {
+                ...rest,
+                id: _id ? encodeId(_id.toString()) : null,
+            };
+        });
+
+    const cleanAttempts = (attempts: any[]) =>
+        attempts.map((attempt) => {
+            const { _id, user, answers = [], ...rest } = attempt;
+            return {
+                ...rest,
+                id: _id ? encodeId(_id.toString()) : null,
+                user: user ? encodeId(user.toString()) : null,
+                answers: cleanAnswers(answers),
+            };
+        });
+
+    const result = exams.map((exam) => {
+        const {
+            _id,
+            createdBy,
+            responsible = [],
+            lessons = [],
+            groups = [],
+            attempts = [],
+            ...rest
+        } = omitFields(exam, ['__v', 'createdAt', 'updatedAt', 'questions']);
+
+        return {
+            id: _id ? encodeId(_id.toString()) : null,
+            createdBy: cleanObject(createdBy),
+            responsible: cleanArray(responsible),
+            lessons: cleanArray(lessons),
+            groups: cleanArray(groups),
+            attempts: cleanAttempts(attempts),
+            ...rest
+        };
+    });
+
+    const totalPages = Math.ceil(totalExams / limit);
+
+    res.status(StatusCodes.OK).json({
+        totalExams,
+        totalPages,
+        currentPage: page,
+        examPerPage: result.length,
+        data: result
+    });
+});
+
+export const getExamByGroups = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const { slug } = req.params;
+    const user = (req as any).user;
+
+    const userGroupIds: string[] = user?.groups?.map((group: any) => decodeIdSafe(group.id)) || [];
+
+
+    let examQuery: any = { slug };
+
+    if (user?.role !== 'admin') {
+        examQuery.groups = { $in: userGroupIds };
+    }
+
+    const exam = await ExamModel.findOne(examQuery)
+        .populate('groups', 'title')
+        .populate('lessons', 'title imageUrl description slug')
+        .populate('responsible', 'firstName lastName role email')
+        .populate('createdBy', 'firstName lastName role email');
+
+    if (!exam) {
+        throw new NotFoundError(`Exam with slug "${slug}" not found or access denied`);
+    }
+
+    const raw = exam.toObject();
+    const examId = raw._id?.toString();
+
+    const {
+        createdBy,
+        responsible = [],
+        groups = [],
+        lessons = [],
+        questions,
+        ...rest
+    } = omitFields(raw, ['__v', 'createdAt', 'updatedAt', '_id', 'attempts']);
+
+    const transformWithEncodedId = (obj: any) => {
+        if (!obj || typeof obj !== 'object' || !obj._id) return obj;
+        const { _id, ...others } = obj;
+        return { ...others, id: encodeId(_id.toString()) };
+    };
+
+    const transformArray = (arr: any[]) =>
+        arr.map(transformWithEncodedId);
+
+    res.status(StatusCodes.OK).json({
+        id: examId ? encodeId(examId) : null,
+        createdBy: createdBy ? transformWithEncodedId(createdBy) : null,
+        responsible: transformArray(responsible),
+        groups: transformArray(groups),
+        lessons: transformArray(lessons),
+        questions: questions ? omitFieldsDeep(questions, ['_id']) : [],
+        ...rest
+    });
+});
+
+
+
+export const getExamsWithAttempts = async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        const [exams, totalExams] = await Promise.all([
+            ExamModel.find({ 'attempts.0': { $exists: true } })
+                .select('attempts title')
+                .populate({
+                    path: 'attempts.user',
+                    select: 'firstName lastName email role'
+                })
+                .skip(skip)
+                .limit(limit),
+            ExamModel.countDocuments({ 'attempts.0': { $exists: true } })
+        ]);
+
+        const cleanUser = (user: any) => {
+            if (!user) return null;
+            if (typeof user === 'object' && user._id) {
+                const { _id, ...rest } = user;
+                return { ...rest, id: encodeId(_id.toString()) };
+            }
+            return encodeId(user.toString());
+        };
+
+        const cleanAnswers = (answers: any[]) =>
+            answers.map((ans) => {
+                const { _id, ...rest } = ans;
+                return {
+                    ...rest,
+                    id: _id ? encodeId(_id.toString()) : null,
+                };
+            });
+
+        const cleanAttempts = (attempts: any[]) =>
+            attempts.map((attempt) => {
+                const { _id, user, answers = [], ...rest } = attempt;
+                return {
+                    ...rest,
+                    id: _id ? encodeId(_id.toString()) : null,
+                    user: cleanUser(user),
+                    answers: cleanAnswers(answers),
+                };
+            });
+
+        const data = exams.map((examDoc) => {
+            const exam = examDoc.toObject();
+            const cleanedAttempts = cleanAttempts(exam.attempts || []);
+            if (!cleanedAttempts.length) return null;
+            return {
+                title: exam.title,
+                attempt: cleanedAttempts[cleanedAttempts.length - 1]
+            };
+        }).filter(Boolean);
+
+        res.status(StatusCodes.OK).json({
+            totalExams,
+            totalPages: Math.ceil(totalExams / limit),
+            currentPage: page,
+            examPerPage: data.length,
+            data
+        });
+
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: 'Error retrieving exams attempts only',
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+};
+
+
+

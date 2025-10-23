@@ -1,3 +1,4 @@
+import 'module-alias/register';
 import { applyGlobalMongoosePlugins } from '@/loaders/mongoosePlugins';
 import { createUploadsFolder } from '@/loaders/createUploadsFolder';
 applyGlobalMongoosePlugins();
