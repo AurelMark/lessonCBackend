@@ -78,6 +78,16 @@ npm run build
 
 ---
 
+## 🧠 Автор
+
+Разработчик: [Aurel Mark](https://github.com/AurelMark)
+
+---
+
+## 📄 Лицензия
+
+Проект предназначен для образовательных целей.
+
 ## 🇬🇧 English Version
 
 Welcome to **LessonC** — a learning platform designed for studying foreign languages.  
@@ -151,3 +161,16 @@ npm run build
 > ```ts
 > import 'module-alias/register';
 > ```
+
+---
+
+## 🧠 Author
+
+Developer: [Aurel Mark](https://github.com/AurelMark)
+
+---
+
+## 📄 License
+
+This project is open for educational purposes only.  
+All API and design rights reserved by the repository owner.
