@@ -151,5 +151,3 @@ npm run build
 > ```ts
 > import 'module-alias/register';
 > ```
-
----
